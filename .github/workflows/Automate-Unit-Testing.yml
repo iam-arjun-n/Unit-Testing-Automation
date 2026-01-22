@@ -10,41 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout source code
+      # 1️ Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js (Node 20 required for CAP / UI5 / MBT)
+      # 2️ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3️⃣ Install Node dependencies
+      # 3️ Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 4️⃣ Run unit tests (hard gate)
+      # 4️ Run unit tests
       - name: Run unit tests
         run: npm test
 
-      # 5️⃣ Setup Java (required for MBT)
+      # 5️ Setup Java (required for MBT)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 6️⃣ Install MBT
+      # 6️ Install MBT
       - name: Install MBT
         run: npm install -g mbt
 
-      # 7️⃣ Build MTA
+      # 7️ Build MTA
       - name: MBT build
         run: mbt build -p=cf
 
-      # 8️⃣ Install Cloud Foundry CLI (APT – reliable)
+      # 8️ Install Cloud Foundry CLI
       - name: Install CF CLI
         run: |
           curl -fsSL https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key \
@@ -58,7 +58,14 @@ jobs:
 
           cf --version
 
-      # 9️⃣ Login to Cloud Foundry (CI-SAFE, ATOMIC)
+      # 9️ Install MTA Plugin (THIS WAS MISSING)
+      - name: Install CF MTA Plugin
+        run: |
+          cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org
+          cf install-plugin multiapps -f
+          cf plugins
+
+      # 10 Login to Cloud Foundry
       - name: CF Login
         run: |
           cf login \
@@ -74,6 +81,6 @@ jobs:
           CF_ORG: ${{ secrets.CF_ORG }}
           CF_SPACE: ${{ secrets.CF_SPACE }}
 
-      # 🔟 Deploy to Cloud Foundry
+      # 1️⃣1️⃣ Deploy MTA
       - name: CF Deploy
         run: cf deploy mta_archives/*.mtar --confirm
