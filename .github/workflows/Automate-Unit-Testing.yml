@@ -45,12 +45,10 @@ jobs:
       - name: MBT build
         run: mbt build -p=cf
 
-      # 8️⃣ Install Cloud Foundry CLI
+      # 8️⃣ Install Cloud Foundry CLI (CORRECT WAY)
       - name: Install CF CLI
         run: |
-          wget -q -O cf.tgz https://packages.cloudfoundry.org/stable?release=linux64-binary
-          tar -xzf cf.tgz
-          sudo mv cf /usr/local/bin/cf
+          curl -fsSL https://packages.cloudfoundry.org/install.sh | bash
           cf --version
 
       # 9️⃣ Login to Cloud Foundry
