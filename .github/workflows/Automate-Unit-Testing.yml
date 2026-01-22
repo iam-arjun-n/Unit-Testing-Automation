@@ -1,0 +1,62 @@
+name: Automate Unit Testing
+
+on:
+  push:
+    branches:
+      - Development
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run unit tests
+        run: npm test
+        # If tests fail → pipeline stops here automatically
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install MBT
+        run: |
+          npm install -g mbt
+
+      - name: MBT build
+        run: mbt build -p=cf
+
+      - name: Install CF CLI
+        run: |
+          wget -q -O cf.tgz https://packages.cloudfoundry.org/stable?release=linux64-binary
+          tar -xzf cf.tgz
+          sudo mv cf /usr/local/bin/cf
+          cf --version
+
+      - name: CF Login
+        run: |
+          cf api $CF_API
+          cf auth $CF_USERNAME $CF_PASSWORD
+          cf target -o $CF_ORG -s $CF_SPACE
+        env:
+          CF_API: ${{ secrets.CF_API }}
+          CF_USERNAME: ${{ secrets.CF_USERNAME }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
+          CF_ORG: ${{ secrets.CF_ORG }}
+          CF_SPACE: ${{ secrets.CF_SPACE }}
+
+      - name: CF Deploy
+        run: cf deploy mta_archives/*.mtar --confirm
