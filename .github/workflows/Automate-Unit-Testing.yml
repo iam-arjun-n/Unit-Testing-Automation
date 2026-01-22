@@ -81,6 +81,6 @@ jobs:
           CF_ORG: ${{ secrets.CF_ORG }}
           CF_SPACE: ${{ secrets.CF_SPACE }}
 
-      # 1️⃣1️⃣ Deploy MTA
+      # 1️1️ Deploy MTA
       - name: CF Deploy
-        run: cf deploy mta_archives/*.mtar --confirm
+        run: cf deploy mta_archives/*.mtar -f
