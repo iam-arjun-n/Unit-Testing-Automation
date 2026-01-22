@@ -10,48 +10,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js (REQUIRED: Node 20 for CAP / UI5 / MBT)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3️⃣ Install Node dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 4️⃣ Run unit tests
       - name: Run unit tests
         run: npm test
-        # If tests fail → pipeline stops here automatically
 
-      # 5️⃣ Setup Java (required for MBT)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 6️⃣ Install MBT
       - name: Install MBT
         run: npm install -g mbt
 
-      # 7️⃣ Build MTA
       - name: MBT build
         run: mbt build -p=cf
 
-      # 8️⃣ Install Cloud Foundry CLI (CORRECT WAY)
+      # ✅ FIXED CF CLI INSTALL
       - name: Install CF CLI
         run: |
-          curl -fsSL https://packages.cloudfoundry.org/install.sh | bash
+          curl -L https://github.com/cloudfoundry/cli/releases/latest/download/cf8-cli_linux_x86-64.tgz -o cf.tgz
+          tar -xzf cf.tgz
+          sudo mv cf8 /usr/local/bin/cf
           cf --version
 
-      # 9️⃣ Login to Cloud Foundry
       - name: CF Login
         run: |
           cf api $CF_API
@@ -64,6 +57,5 @@ jobs:
           CF_ORG: ${{ secrets.CF_ORG }}
           CF_SPACE: ${{ secrets.CF_SPACE }}
 
-      # 🔟 Deploy to Cloud Foundry
       - name: CF Deploy
         run: cf deploy mta_archives/*.mtar --confirm
